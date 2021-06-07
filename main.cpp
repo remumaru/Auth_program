@@ -1,5 +1,4 @@
 #include <iostream>
-#include <unistd.h>
 #include <string>
 #include <streambuf>
 #include <fstream>
@@ -40,33 +39,82 @@ void get_data(string data, string u[], string p[]) {
 }
 //0x178aeb8
 int main() {
+    bool log_success = false;
     auto* usernames = new string[500];
     auto* passwords = new string[500];
-    ofstream writefile("userdata.txt", ios_base::app | ios_base::ate);
     ifstream readfile("userdata.txt");
+    if (!readfile.is_open()) {
+        ofstream writefile("userdata.txt");
+        writefile.close();
+    }
+    string str((istreambuf_iterator<char>(readfile)), istreambuf_iterator<char>());
+    get_data(str, usernames, passwords);
     string login;
     string passwd;
     int choice;
     cout << "0: Register" << endl << "1: Login" << endl << "Your choice: ";
     cin >> choice;
-    system("clear");
-    cout << "  Login  : ";
+    if (choice)
+        if (str.empty()) {
+            cout << "No users is on the list. First create a user" << endl;
+            return 0;
+        }
+    system("cls");
+    cout << "   Login   : ";
     cin >> login;
-    cout << "Password : ";
+    cout << "  Password : ";
     cin >> passwd;
-    system("clear");
+    cout << endl;
+    //Registration
     if (!choice) {
-
-    }
-    else if (choice) {
-        string str((istreambuf_iterator<char>(readfile)), istreambuf_iterator<char>());
-        get_data(str, usernames, passwords);
-        for (int x = 0, y = x; x < 500; x++, y++) {
-            if (usernames[x].empty())
-                continue;
-            cout << usernames[x] << " * " << passwords[y] << endl;
+        ofstream writefile("userdata.txt", ios_base::trunc);
+        if (!str.empty()) {
+            for (int x = 0; x < 500; x++) {
+                if (usernames[x].empty()) {
+                    continue;
+                } else {
+                    for (int i = 0; i < 500; i++) {
+                        if (usernames[i].empty())
+                            continue;
+                        else if (usernames[i] == login) {
+                            cout << "Username is already exist!!";
+                            return 0;
+                        }
+                    }
+                    str.erase(prev(str.end()));
+                    writefile << str << endl << ":" << login << "*" << passwd << ";";
+                    writefile.close();
+                    cout << "Registration Successful!!" << endl;
+                    return 0;
+                }
+            }
+        }
+        else {
+            writefile << ":" << login << "*" << passwd << ";";
+            cout << "Registration Successful!!" << endl;
         }
     }
-    writefile.close();
+    //Authorization
+    else if (choice) {
+        for (int x = 0; x < 500; x++) {
+            if (usernames[x].empty())
+                continue;
+            else if (usernames[x] == login) {
+                if (passwords[x] == passwd)
+                    log_success = true;
+                else {
+                    cout << "Wrong password!!" << endl;
+                    return 0;
+                }
+            }
+        }
+        if (log_success) {
+            cout << "Authorization Successful!!" << endl;
+        }
+        else {
+            cout << "Wrong login or password!!" << endl;
+        }
+    }
+
     return 0;
 }
